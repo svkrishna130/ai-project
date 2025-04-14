@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Converter Chat Bot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            height: 700px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .bot-icon {
+            font-size: 1.5rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        .user-message {
+            background-color: #4a6fa5;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            background-color: #e5e5ea;
+            color: black;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+
+        .bot-message ul {
+            padding-left: 20px;
+            margin: 5px 0;
+        }
+
+        .bot-message li {
+            margin-bottom: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            background-color: white;
+            border-top: 1px solid #eee;
+        }
+
+        .chat-input-text {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .chat-input-text input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .chat-input-text button {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .chat-input-text button:hover {
+            background-color: #3a5a80;
+        }
+
+        .conversion-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .conversion-controls input,
+        .conversion-controls select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        #amount-input {
+            width: 80px;
+        }
+
+        .conversion-controls select {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .swap-currencies {
+            cursor: pointer;
+            padding: 5px;
+            color: #4a6fa5;
+            font-size: 0.9rem;
+        }
+
+        .swap-currencies:hover {
+            color: #3a5a80;
+        }
+
+        #convert-button {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        #convert-button:hover {
+            background-color: #3a5a80;
+        }
+
+        .conversion-result {
+            font-weight: bold;
+            color: #2c7be5;
+            margin-top: 5px;
+        }
+
+        .exchange-rate {
+            font-style: italic;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .error-message {
+            color: #e63757;
+            font-weight: bold;
+        }
+
+        .currency-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .currency-item {
+            padding: 3px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,.1);
+            border-radius: 50%;
+            border-top-color: #4a6fa5;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Currency Converter Bot</h2>
+            <div class="bot-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="bot-message">
+                <p>Hello! I'm your currency converter assistant. You can ask me things like:</p>
+                <ul>
+                    <li>"Convert 100 USD to EUR"</li>
+                    <li>"What's the exchange rate between GBP and JPY?"</li>
+                    <li>"Show me all available currencies"</li>
+                </ul>
+                <p>Or use the controls below to select currencies.</p>
+            </div>
+        </div>
+        <div class="chat-input">
+            <div class="conversion-controls">
+                <input type="number" id="amount-input" placeholder="Amount" min="0" step="0.01">
+                <select id="from-currency">
+                    <option value="">From</option>
+                </select>
+                <span class="swap-currencies" title="Swap currencies"><i class="fas fa-exchange-alt"></i></span>
+                <select id="to-currency">
+                    <option value="">To</option>
+                </select>
+                <button id="convert-button">Convert</button>
+            </div>
+            <div class="chat-input-text">
+                <input type="text" id="user-input" placeholder="Or type your currency query here..." autocomplete="off">
+                <button id="send-button"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const fromCurrencySelect = document.getElementById('from-currency');
+            const toCurrencySelect = document.getElementById('to-currency');
+            const amountInput = document.getElementById('amount-input');
+            const convertButton = document.getElementById('convert-button');
+            const swapButton = document.querySelector('.swap-currencies');
+            
+            // API configuration
+            const API_KEY = 'ea7569230a9a57c3e1e929b1';
+            const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`;
+            
+            let exchangeRates = {};
+            let currencies = [];
+            
+            // Initialize by fetching exchange rates
+            fetchExchangeRates();
+            
+            // Event listeners
+            sendButton.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            convertButton.addEventListener('click', convertWithDropdowns);
+            swapButton.addEventListener('click', swapCurrencies);
+            
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (message === '') return;
+                
+                // Add user message to chat
+                addMessage(message, 'user');
+                userInput.value = '';
+                
+                // Show loading indicator
+                const loadingIndicator = document.createElement('div');
+                loadingIndicator.className = 'loading';
+                chatMessages.appendChild(loadingIndicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Process the message after a short delay
+                setTimeout(() => {
+                    chatMessages.removeChild(loadingIndicator);
+                    processUserMessage(message);
+                }, 500);
+            }
+            
+            function addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `${sender}-message message`;
+                
+                const messageText = document.createElement('p');
+                messageText.textContent = text;
+                messageDiv.appendChild(messageText);
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function addBotResponse(text, isHTML = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'bot-message message';
+                
+                if (isHTML) {
+                    messageDiv.innerHTML = text;
+                } else {
+                    const messageText = document.createElement('p');
+                    messageText.textContent = text;
+                    messageDiv.appendChild(messageText);
+                }
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            async function fetchExchangeRates() {
+                try {
+                    const response = await fetch(API_URL);
+                    const data = await response.json();
+                    
+                    if (data.result === 'success') {
+                        exchangeRates = data.conversion_rates;
+                        currencies = Object.keys(exchangeRates).sort();
+                        populateCurrencyDropdowns();
+                        
+                        const updateTime = new Date(data.time_last_update_utc).toLocaleString();
+                        addBotResponse(`Exchange rates were last updated on ${updateTime}. How can I help you with currency conversion today?`);
+                    } else {
+                        addBotResponse(`Sorry, I couldn't fetch the latest exchange rates. Error: ${data['error-type']}`, true);
+                    }
+                } catch (error) {
+                    addBotResponse('Sorry, there was an error connecting to the exchange rate service. Please try again later.', true);
+                    console.error('Error fetching exchange rates:', error);
+                }
+            }
+            
+            function populateCurrencyDropdowns() {
+                fromCurrencySelect.innerHTML = '<option value="">From</option>';
+                toCurrencySelect.innerHTML = '<option value="">To</option>';
+                
+                currencies.forEach(currency => {
+                    const option1 = document.createElement('option');
+                    option1.value = currency;
+                    option1.textContent = currency;
+                    fromCurrencySelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = currency;
+                    option2.textContent = currency;
+                    toCurrencySelect.appendChild(option2);
+                });
+                
+                // Set default currencies
+                fromCurrencySelect.value = 'USD';
+                toCurrencySelect.value = 'EUR';
+            }
+            
+            function convertWithDropdowns() {
+                const amount = parseFloat(amountInput.value);
+                const fromCurrency = fromCurrencySelect.value;
+                const toCurrency = toCurrencySelect.value;
+                
+                if (!amount || isNaN(amount) || amount <= 0) {
+                    addBotResponse('Please enter a valid amount to convert.', true);
+                    return;
+                }
+                
+                if (!fromCurrency || !toCurrency) {
+                    addBotResponse('Please select both currencies for conversion.', true);
+                    return;
+                }
+                
+                // Add user message to chat
+                addMessage(`Convert ${amount} ${fromCurrency} to ${toCurrency}`, 'user');
+                
+                // Perform the conversion
+                const fromRate = exchangeRates[fromCurrency];
+                const toRate = exchangeRates[toCurrency];
+                const convertedAmount = (amount / fromRate) * toRate;
+                
+                const responseHTML = `
+                    <p>Conversion result:</p>
+                    <div class="conversion-result">${amount} ${fromCurrency} = ${convertedAmount.toFixed(2)} ${toCurrency}</div>
+                    <div class="exchange-rate">1 ${fromCurrency} = ${(toRate / fromRate).toFixed(6)} ${toCurrency}</div>
+                `;
+                
+                addBotResponse(responseHTML, true);
+            }
+            
+            function swapCurrencies() {
+                const temp = fromCurrencySelect.value;
+                fromCurrencySelect.value = toCurrencySelect.value;
+                toCurrencySelect.value = temp;
+            }
+            
+            function processUserMessage(message) {
+                const lowerMessage = message.toLowerCase();
+                
+                if (lowerMessage.includes('convert') || lowerMessage.includes('exchange')) {
+                    processConversionRequest(message);
+                } else if (lowerMessage.includes('rate') || lowerMessage.includes('exchange rate')) {
+                    processRateRequest(message);
+                } else if (lowerMessage.includes('list') || lowerMessage.includes('available') || lowerMessage.includes('currencies')) {
+                    showAvailableCurrencies();
+                } else if (lowerMessage.includes('help')) {
+                    showHelp();
+                } else {
+                    addBotResponse("I'm not sure I understand. You can ask me to convert currencies, show exchange rates, or list available currencies. Try something like 'Convert 100 USD to EUR' or use the controls above.");
+                }
+            }
+            
+            function processConversionRequest(message) {
+                const regex = /convert\s+(\d+\.?\d*)\s+([a-zA-Z]{3})\s+to\s+([a-zA-Z]{3})/i;
+                const match = message.match(regex);
+                
+                if (!match) {
+                    addBotResponse("I couldn't understand your conversion request. Please use the format: 'Convert 100 USD to EUR'");
+                    return;
+                }
+                
+                const amount = parseFloat(match[1]);
+                const fromCurrency = match[2].toUpperCase();
+                const toCurrency = match[3].toUpperCase();
+                
+                if (!currencies.includes(fromCurrency)) {
+                    addBotResponse(`Sorry, I don't have data for ${fromCurrency}. Use 'Show available currencies' to see what I support.`);
+                    return;
+                }
+                
+                if (!currencies.includes(toCurrency)) {
+                    addBotResponse(`Sorry, I don't have data for ${toCurrency}. Use 'Show available currencies' to see what I support.`);
+                    return;
+                }
+                
+                // Update the dropdowns to reflect this conversion
+                fromCurrencySelect.value = fromCurrency;
+                toCurrencySelect.value = toCurrency;
+                amountInput.value = amount;
+                
+                // Perform the conversion
+                const fromRate = exchangeRates[fromCurrency];
+                const toRate = exchangeRates[toCurrency];
+                const convertedAmount = (amount / fromRate) * toRate;
+                
+                const responseHTML = `
+                    <p>Conversion result:</p>
+                    <div class="conversion-result">${amount} ${fromCurrency} = ${convertedAmount.toFixed(2)} ${toCurrency}</div>
+                    <div class="exchange-rate">1 ${fromCurrency} = ${(toRate / fromRate).toFixed(6)} ${toCurrency}</div>
+                `;
+                
+                addBotResponse(responseHTML, true);
+            }
+            
+            function processRateRequest(message) {
+                const regex = /(?:rate|exchange rate)\s+(?:between|for)\s+([a-zA-Z]{3})\s+(?:and|to)\s+([a-zA-Z]{3})/i;
+                const match = message.match(regex);
+                
+                if (!match) {
+                    addBotResponse("I couldn't understand your rate request. Please use the format: 'What's the exchange rate between USD and EUR?'");
+                    return;
+                }
+                
+                const fromCurrency = match[1].toUpperCase();
+                const toCurrency = match[2].toUpperCase();
+                
+                if (!currencies.includes(fromCurrency)) {
+                    addBotResponse(`Sorry, I don't have data for ${fromCurrency}. Use 'Show available currencies' to see what I support.`);
+                    return;
+                }
+                
+                if (!currencies.includes(toCurrency)) {
+                    addBotResponse(`Sorry, I don't have data for ${toCurrency}. Use 'Show available currencies' to see what I support.`);
+                    return;
+                }
+                
+                // Update the dropdowns to reflect this query
+                fromCurrencySelect.value = fromCurrency;
+                toCurrencySelect.value = toCurrency;
+                
+                // Calculate the exchange rate
+                const fromRate = exchangeRates[fromCurrency];
+                const toRate = exchangeRates[toCurrency];
+                const exchangeRate = toRate / fromRate;
+                
+                const responseHTML = `
+                    <p>Exchange rate:</p>
+                    <div class="exchange-rate">1 ${fromCurrency} = ${exchangeRate.toFixed(6)} ${toCurrency}</div>
+                    <div class="exchange-rate">1 ${toCurrency} = ${(1 / exchangeRate).toFixed(6)} ${fromCurrency}</div>
+                `;
+                
+                addBotResponse(responseHTML, true);
+            }
+            
+            function showAvailableCurrencies() {
+                if (currencies.length === 0) {
+                    addBotResponse("I don't have currency data available right now. Please try again later.");
+                    return;
+                }
+                
+                let responseHTML = '<p>Available currencies:</p><div class="currency-list">';
+                
+                currencies.forEach(currency => {
+                    responseHTML += `<div class="currency-item">${currency}</div>`;
+                });
+                
+                responseHTML += '</div><p>You can use any of these in your conversion requests.</p>';
+                
+                addBotResponse(responseHTML, true);
+            }
+            
+            function showHelp() {
+                const helpText = `
+                    <p>I can help you with currency conversions. Here's what you can do:</p>
+                    <ul>
+                        <li><strong>Use the controls above</strong> - Select currencies and amount, then click Convert</li>
+                        <li><strong>Type commands</strong> like:
+                            <ul>
+                                <li>"Convert 100 USD to EUR"</li>
+                                <li>"What's the exchange rate between GBP and JPY?"</li>
+                                <li>"Show available currencies"</li>
+                            </ul>
+                        </li>
+                        <li><strong>Click the swap icon (↔)</strong> to quickly reverse your currency selection</li>
+                    </ul>
+                    <p>Exchange rates are updated regularly but may not reflect real-time market rates.</p>
+                `;
+                
+                addBotResponse(helpText, true);
+            }
+        });
+    </script>
+</body>
+</html>
