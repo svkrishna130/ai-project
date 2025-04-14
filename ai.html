@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Converter Chat Bot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: url('https://images.unsplash.com/photo-1604594849809-dfedbc827105?q=80&w=1000');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-blend-mode: overlay;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            height: 700px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .chat-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(to bottom, rgba(67, 97, 238, 0.2), transparent);
+        }
+
+        .chat-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bot-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bot-icon {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .bot-icon i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .bot-status {
+            font-size: 0.7rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 3px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: var(--light-color);
+            background-image: url('https://www.transparenttextures.com/patterns/brushed-alum.png');
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            font-size: 0.95rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+            background-image: linear-gradient(to right, var(--primary-color), var(--accent-color));
+        }
+
+        .bot-message {
+            background-color: white;
+            color: var(--dark-color);
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            background-image: linear-gradient(to right, white, #f1f3f5);
+        }
+
+        .bot-message ul {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .bot-message li {
+            margin-bottom: 6px;
+        }
+
+        .chat-input-area {
+            padding: 15px;
+            background-color: white;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .conversion-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .amount-input {
+            flex: 1;
+            min-width: 80px;
+            max-width: 100px;
+            padding: 10px 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background-color: var(--light-color);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%234361ee" viewBox="0 0 16 16"><path d="M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v1H1V3zm0 3v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6H1zm3 1a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            background-size: 16px;
+            padding-left: 35px;
+        }
+
+        .amount-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(72, 149, 239, 0.2);
+        }
+
+        .currency-select {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            background-color: var(--light-color);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234361ee' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%234361ee" viewBox="0 0 16 16"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>');
+            background-repeat: no-repeat, no-repeat;
+            background-position: right 10px center, left 10px center;
+            background-size: 15px, 16px;
+            transition: var(--transition);
+            padding-left: 35px;
+        }
+
+        .currency-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(72, 149, 239, 0.2);
+        }
+
+        .swap-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: white;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--primary-color);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .swap-btn:hover {
+            background-color: var(--light-color);
+            transform: rotate(180deg);
+            color: var(--secondary-color);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            flex: 1;
+            background-image: linear-gradient(to right, var(--primary-color), var(--accent-color));
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-secondary {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .text-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .text-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background-color: var(--light-color);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%236c757d" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 15px center;
+            background-size: 16px;
+            padding-left: 40px;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(72, 149, 239, 0.2);
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--border-radius);
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background-image: linear-gradient(to bottom right, var(--primary-color), var(--accent-color));
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .send-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .conversion-result {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-top: 8px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .exchange-rate {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .error-message {
+            color: var(--warning-color);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .currency-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .currency-item {
+            padding: 6px 8px;
+            font-size: 0.85rem;
+            background-color: rgba(67, 97, 238, 0.1);
+            border-radius: 6px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .currency-item:hover {
+            background-color: rgba(67, 97, 238, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(67, 97, 238, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .timestamp {
+            font-size: 0.7rem;
+            color: rgba(0, 0, 0, 0.4);
+            margin-top: 5px;
+            text-align: right;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+
+        .rate-highlight {
+            background-color: rgba(76, 201, 240, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .currency-flag {
+            width: 16px;
+            height: 12px;
+            border-radius: 2px;
+            box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .conversion-controls {
+                flex-direction: column;
+            }
+            
+            .amount-input, .currency-select {
+                max-width: 100%;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2><i class="fas fa-exchange-alt"></i> Currency Converter</h2>
+            <div class="bot-info">
+                <div class="bot-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div>
+                    <div class="bot-status">Online</div>
+                </div>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="bot-message">
+                <p>💱 <strong>Welcome to Currency Converter Bot!</strong></p>
+                <p>I can help you convert between 160+ currencies with real-time exchange rates.</p>
+                <p>Try asking:</p>
+                <ul>
+                    <li>"Convert 500 USD to EUR"</li>
+                    <li>"What's 100 GBP in JPY?"</li>
+                    <li>"Show supported currencies"</li>
+                </ul>
+                <p>Or use the controls below ⬇️</p>
+                <div class="timestamp"><i class="far fa-clock"></i> Just now</div>
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <div class="conversion-controls">
+                <input type="number" id="amount-input" class="amount-input" placeholder="Amount" min="0" step="0.01">
+                <select id="from-currency" class="currency-select">
+                    <option value="">From currency</option>
+                </select>
+                <button class="swap-btn" id="swap-btn" title="Swap currencies">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+                <select id="to-currency" class="currency-select">
+                    <option value="">To currency</option>
+                </select>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="convert-button">
+                    <i class="fas fa-calculator"></i> Convert
+                </button>
+                <button class="btn btn-secondary" id="list-currencies">
+                    <i class="fas fa-list"></i> List
+                </button>
+            </div>
+            <div class="text-input-container">
+                <input type="text" id="user-input" class="text-input" placeholder="Or type your currency query here..." autocomplete="off">
+                <button class="send-btn" id="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const fromCurrencySelect = document.getElementById('from-currency');
+            const toCurrencySelect = document.getElementById('to-currency');
+            const amountInput = document.getElementById('amount-input');
+            const convertButton = document.getElementById('convert-button');
+            const swapButton = document.getElementById('swap-btn');
+            const listCurrenciesButton = document.getElementById('list-currencies');
+            
+            // API configuration
+            const API_KEY = 'ea7569230a9a57c3e1e929b1';
+            const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`;
+            
+            let exchangeRates = {};
+            let currencies = [];
+            
+            // Currency flag mapping (simplified for demo)
+            const currencyFlags = {
+                USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', JPY: '🇯🇵', 
+                AUD: '🇦🇺', CAD: '🇨🇦', CHF: '🇨🇭', CNY: '🇨🇳',
+                INR: '🇮🇳', SGD: '🇸🇬', NZD: '🇳🇿', MXN: '🇲🇽',
+                BRL: '🇧🇷', ZAR: '🇿🇦', KRW: '🇰🇷', SEK: '🇸🇪'
+            };
+            
+            // Initialize by fetching exchange rates
+            fetchExchangeRates();
+            
+            // Event listeners
+            sendButton.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            convertButton.addEventListener('click', convertWithDropdowns);
+            swapButton.addEventListener('click', swapCurrencies);
+            listCurrenciesButton.addEventListener('click', showAvailableCurrencies);
+            
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (message === '') return;
+                
+                // Add user message to chat
+                addMessage(message, 'user');
+                userInput.value = '';
+                
+                // Show loading indicator
+                const loadingIndicator = document.createElement('div');
+                loadingIndicator.className = 'loading';
+                chatMessages.appendChild(loadingIndicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Process the message after a short delay
+                setTimeout(() => {
+                    chatMessages.removeChild(loadingIndicator);
+                    processUserMessage(message);
+                }, 500);
+            }
+            
+            function addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `${sender}-message message`;
+                
+                const messageText = document.createElement('p');
+                messageText.textContent = text;
+                messageDiv.appendChild(messageText);
+                
+                // Add timestamp
+                const timestamp = document.createElement('div');
+                timestamp.className = 'timestamp';
+                timestamp.innerHTML = `<i class="far fa-clock"></i> ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                messageDiv.appendChild(timestamp);
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function addBotResponse(text, isHTML = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'bot-message message';
+                
+                if (isHTML) {
+                    messageDiv.innerHTML = text;
+                } else {
+                    const messageText = document.createElement('p');
+                    messageText.textContent = text;
+                    messageDiv.appendChild(messageText);
+                }
+                
+                // Add timestamp
+                const timestamp = document.createElement('div');
+                timestamp.className = 'timestamp';
+                timestamp.innerHTML = `<i class="far fa-clock"></i> ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                messageDiv.appendChild(timestamp);
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            async function fetchExchangeRates() {
+                try {
+                    // Show loading in the chat
+                    addBotResponse('🔍 <i class="fas fa-spinner fa-spin"></i> Fetching latest exchange rates...');
+                    
+                    const response = await fetch(API_URL);
+                    const data = await response.json();
+                    
+                    if (data.result === 'success') {
+                        exchangeRates = data.conversion_rates;
+                        currencies = Object.keys(exchangeRates).sort();
+                        populateCurrencyDropdowns();
+                        
+                        const updateTime = new Date(data.time_last_update_utc).toLocaleString();
+                        
+                        // Remove the loading message
+                        chatMessages.removeChild(chatMessages.lastChild);
+                        
+                        addBotResponse(`✅ <strong>Exchange rates updated!</strong><br>📅 Last update: ${updateTime}<br>💰 Base currency: ${data.base_code}`);
+                    } else {
+                        addBotResponse(`❌ <strong>Error:</strong> Couldn't fetch exchange rates. (${data['error-type']})`, true);
+                    }
+                } catch (error) {
+                    addBotResponse('❌ <strong>Network error:</strong> Please check your internet connection and try again.', true);
+                    console.error('Error fetching exchange rates:', error);
+                }
+            }
+            
+            function populateCurrencyDropdowns() {
+                fromCurrencySelect.innerHTML = '<option value="">From currency</option>';
+                toCurrencySelect.innerHTML = '<option value="">To currency</option>';
+                
+                currencies.forEach(currency => {
+                    const flag = currencyFlags[currency] || '💱';
+                    const option1 = document.createElement('option');
+                    option1.value = currency;
+                    option1.textContent = `${flag} ${currency}`;
+                    fromCurrencySelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = currency;
+                    option2.textContent = `${flag} ${currency}`;
+                    toCurrencySelect.appendChild(option2);
+                });
+                
+                // Set default currencies
+                fromCurrencySelect.value = 'USD';
+                toCurrencySelect.value = 'EUR';
+            }
+            
+            function convertWithDropdowns() {
+                const amount = parseFloat(amountInput.value);
+                const fromCurrency = fromCurrencySelect.value;
+                const toCurrency = toCurrencySelect.value;
+                
+                if (!amount || isNaN(amount)) {
+                    addBotResponse('⚠️ <i class="fas fa-exclamation-circle"></i> Please enter a valid amount to convert.', true);
+                    amountInput.focus();
+                    return;
+                }
+                
+                if (amount <= 0) {
+                    addBotResponse('⚠️ <i class="fas fa-exclamation-circle"></i> Amount must be greater than zero.', true);
+                    amountInput.focus();
+                    return;
+                }
+                
+                if (!fromCurrency || !toCurrency) {
+                    addBotResponse('⚠️ <i class="fas fa-exclamation-circle"></i> Please select both currencies for conversion.', true);
+                    return;
+                }
+                
+                // Add user message to chat
+                addMessage(`Convert ${amount} ${fromCurrency} to ${toCurrency}`, 'user');
+                
+                // Perform the conversion
+                const fromRate = exchangeRates[fromCurrency];
+                const toRate = exchangeRates[toCurrency];
+                const convertedAmount = (amount / fromRate) * toRate;
+                const exchangeRate = (toRate / fromRate).toFixed(6);
+                const fromFlag = currencyFlags[fromCurrency] || '💱';
+                const toFlag = currencyFlags[toCurrency] || '💱';
+                
+                const responseHTML = `
+                    <p>💱 <strong>Conversion result:</strong></p>
+                    <div class="conversion-result">${fromFlag} ${amount.toFixed(2)} ${fromCurrency} = ${toFlag} ${convertedAmount.toFixed(2)} ${toCurrency}</div>
+                    <div class="exchange-rate"><i class="fas fa-chart-line"></i> Exchange rate: <span class="rate-highlight">1 ${fromCurrency} = ${exchangeRate} ${toCurrency}</span></div>
+                `;
+                
+                addBotResponse(responseHTML, true);
+            }
+            
+            function swapCurrencies() {
+                const temp = fromCurrencySelect.value;
+                fromCurrencySelect.value = toCurrencySelect.value;
+                toCurrencySelect.value = temp;
+                
+                // Add animation effect
+                swapButton.style.transform = 'rotate(180deg)';
+                setTimeout(() => {
+                    swapButton.style.transform = 'rotate(0)';
+                }, 300);
+                
+                // If there's an amount, keep it and convert immediately
+                if (amountInput.value && fromCurrencySelect.value && toCurrencySelect.value) {
+                    convertWithDropdowns();
+                }
+            }
+            
+            function processUserMessage(message) {
+                const lowerMessage = message.toLowerCase();
+                
+                if (lowerMessage.includes('convert') || lowerMessage.includes('exchange') || 
+                    lowerMessage.includes('how much') || lowerMessage.includes('what is')) {
+                    processConversionRequest(message);
+                } else if (lowerMessage.includes('rate') || lowerMessage.includes('exchange rate')) {
+                    processRateRequest(message);
+                } else if (lowerMessage.includes('list') || lowerMessage.includes('available') || 
+                           lowerMessage.includes('currencies') || lowerMessage.includes('supported')) {
+                    showAvailableCurrencies();
+                } else if (lowerMessage.includes('help')) {
+                    showHelp();
+                } else {
+                    addBotResponse("🤔 I'm not sure I understand. You can ask me to convert currencies, show exchange rates, or list available currencies. Try something like 'Convert 100 USD to EUR' or use the controls above.");
+                }
+            }
+            
+            function processConversionRequest(message) {
+                // Enhanced regex to handle more natural language
+                const regex = /(?:convert|exchange|how much is|what is)\s+(\d+\.?\d*)\s+([a-zA-Z]{3})\s+(?:to|in)\s+([a-zA-Z]{3})/i;
+                const match = message.match(regex);
+                
+                if (!match) {
+                    addBotResponse("⚠️ I couldn't understand your conversion request. Please use formats like:<br>'Convert 100 USD to EUR'<br>'What is 50 GBP in JPY?'");
+                    return;
+                }
+                
+                const amount = parseFloat(match[1]);
+                const fromCurrency = match[2].toUpperCase();
+                const toCurrency = match[3].toUpperCase();
+                
+                if (!currencies.includes(fromCurrency)) {
+                    addBotResponse(`❌ Sorry, I don't have data for ${fromCurrency}. Use 'List currencies' to see supported ones.`);
+                    return;
+                }
+                
+                if (!currencies.includes(toCurrency)) {
+                    addBotResponse(`❌ Sorry, I don't have data for ${toCurrency}. Use 'List currencies' to see supported ones.`);
+                    return;
+                }
+                
+                // Update the dropdowns to reflect this conversion
+                fromCurrencySelect.value = fromCurrency;
+                toCurrencySelect.value = toCurrency;
+                amountInput.value = amount;
+                
+                // Perform the conversion
+                const fromRate = exchangeRates[fromCurrency];
+                const toRate = exchangeRates[toCurrency];
+                const convertedAmount = (amount / fromRate) * toRate;
+                const exchangeRate = (toRate / fromRate).toFixed(6);
+                const fromFlag = currencyFlags[fromCurrency] || '💱';
+                const toFlag = currencyFlags[toCurrency] || '💱';
+                
+                const responseHTML = `
+                    <p>💱 <strong>Conversion result:</strong></p>
+                    <div class="conversion-result">${fromFlag} ${amount.toFixed(2)} ${fromCurrency} = ${toFlag} ${convertedAmount.toFixed(2)} ${toCurrency}</div>
+                    <div class="exchange-rate"><i class="fas fa-chart-line"></i> Exchange rate: <span class="rate-highlight">1 ${fromCurrency} = ${exchangeRate} ${toCurrency}</span></div>
+                `;
+                
+                addBotResponse(responseHTML, true);
+            }
+            
+            function processRateRequest(message) {
+                // Enhanced regex to handle more natural language
+                const regex = /(?:rate|exchange rate|value)\s+(?:between|for|of)\s+([a-zA-Z]{3})\s+(?:and|to)\s+([a-zA-Z]{3})/i;
+                const match = message.match(regex);
+                
+                if (!match) {
+                    addBotResponse("⚠️ I couldn't understand your rate request. Please use formats like:<br>'Exchange rate between USD and EUR'<br>'What's the rate for GBP to JPY?'");
+                    return;
+                }
+                
+                const fromCurrency = match[1].toUpperCase();
+                const toCurrency = match[2].toUpperCase();
+                
+                if (!currencies.includes(fromCurrency)) {
+                    addBotResponse(`❌ Sorry, I don't have data for ${fromCurrency}. Use 'List currencies' to see supported ones.`);
+                    return;
+                }
+                
+                if (!currencies.includes(toCurrency)) {
+                    addBotResponse(`❌ Sorry, I don't have data for ${toCurrency}. Use 'List currencies' to see supported ones.`);
+                    return;
+                }
+                
+                // Update the dropdowns to reflect this query
+                fromCurrencySelect.value = fromCurrency;
+                toCurrencySelect.value = toCurrency;
+                
+                // Calculate the exchange rate
+                const fromRate = exchangeRates[fromCurrency];
+                const toRate = exchangeRates[toCurrency];
+                const exchangeRate = (toRate / fromRate).toFixed(6);
+                const inverseRate = (1 / exchangeRate).toFixed(6);
+                const fromFlag = currencyFlags[fromCurrency] || '💱';
+                const toFlag = currencyFlags[toCurrency] || '💱';
+                
+                const responseHTML = `
+                    <p>📈 <strong>Exchange rates:</strong></p>
+                    <div class="exchange-rate">${fromFlag} <span class="rate-highlight">1 ${fromCurrency} = ${exchangeRate} ${toCurrency}</span></div>
+                    <div class="exchange-rate">${toFlag} <span class="rate-highlight">1 ${toCurrency} = ${inverseRate} ${fromCurrency}</span></div>
+                `;
+                
+                addBotResponse(responseHTML, true);
+            }
+            
+            function showAvailableCurrencies() {
+                if (currencies.length === 0) {
+                    addBotResponse("❌ I don't have currency data available right now. Please try again later.");
+                    return;
+                }
+                
+                // Add user message to chat
+                addMessage("Show available currencies", 'user');
+                
+                let responseHTML = `
+                    <p>🌍 <strong>Supported currencies</strong> (${currencies.length} total):</p>
+                    <div class="currency-list">
+                `;
+                
+                // Group currencies in chunks of 3 columns
+                currencies.forEach(currency => {
+                    const flag = currencyFlags[currency] || '💱';
+                    responseHTML += `<div class="currency-item">${flag} ${currency}</div>`;
+                });
+                
+                responseHTML += `
+                    </div>
+                    <p>You can convert between any of these currencies.</p>
+                `;
+                
+                addBotResponse(responseHTML, true);
+            }
+            
+            function showHelp() {
+                // Add user message to chat
+                addMessage("Help", 'user');
+                
+                const helpText = `
+                    <p>💡 <strong>Currency Converter Bot Help</strong></p>
+                    <p>I can help you with real-time currency conversions between 160+ currencies.</p>
+                    
+                    <div style="background: rgba(67, 97, 238, 0.05); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                        <p style="font-weight: 500; color: var
